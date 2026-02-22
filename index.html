@@ -1,12 +1,19 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Supabase Configuration</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonComptoir Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+    <script>
+        const supabaseUrl = 'https://xbxmuwifoeuxsmkdjvrc.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhieG11d2lmb2V1eHNta2RqdnJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4ODU3OTIsImV4cCI6MjA4NjQ2MTc5Mn0.5kVMbnMrg6pIoXtYI9Dl_fLBMcn4pjUg8XYnWCsqr68';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        // Your application logic goes here
+    </script>
 </head>
 <body>
-    <script>
-        const SUPABASE_URL = 'https://xbxmuwifoeuxsmkdjvrc.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhieG11d2lmb2V1eHNta2RqdnJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4ODU3OTIsImV4cCI6MjA4NjQ2MTc5Mn0.5kVMbnMrg6pIoXtYI9Dl_fLBMcn4pjUg8XYnWCsqr68';
-        // Add your Supabase-related code here
-    </script>
+    <h1>Welcome to MonComptoir Pro!</h1>
+    <div id="app"></div>
 </body>
 </html>
