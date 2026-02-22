@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MonComptoir Pro — Gestion Commerciale</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#0a0f0a;--bg2:#111611;--bg3:#161e16;--card:#1a231a;--card2:#1f2b1f;--border:#2a3d2a;--green:#22c55e;--green3:#4ade80;--gdim:rgba(34,197,94,.13);--gdim2:rgba(34,197,94,.06);--text:#f0faf0;--text2:#a0b8a0;--text3:#607060;--red:#f87171;--rdim:rgba(248,113,113,.13);--yellow:#fbbf24;--ydim:rgba(251,191,36,.13);--blue:#60a5fa;--bdim:rgba(96,165,250,.13)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.hidden{display:none!important}
+.c-green{color:var(--green)}.c-red{color:var(--red)}.c-yellow{color:var(--yellow)}.c-blue{color:var(--blue)}
+.fw7{font-weight:700}.fw8{font-weight:800}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;transition:all .15s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--green);color:#000}.btn-primary:hover:not(:disabled){background:var(--green3)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-danger{background:var(--rdim);color:var(--red);border:1px solid rgba(248,113,113,.2)}.btn-danger:hover{background:rgba(248,113,113,.2)}
+.btn-sm{padding:7px 14px;font-size:12px}.btn-xs{padding:4px 9px;font-size:11px}.btn-full{width:100%}
+
+/* FORMS */
+.fg{margin-bottom:14px}
+.fg label{display:block;margin-bottom:5px;color:var(--text2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.inp,.sel{width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;font-family:inherit;transition:border-color .15s}
+.inp:focus,.sel:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--gdim)}
+.sel{cursor:pointer}.sel option{background:var(--card)}
+.err-msg{color:var(--red);font-size:11px;margin-top:5px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.tag-green{background:var(--gdim);color:var(--green)}.tag-red{background:var(--rdim);color:var(--red)}
+.tag-yellow{background:var(--ydim);color:var(--yellow)}.tag-blue{background:var(--bdim);color:var(--blue)}
+
+/* AUTH */
+#auth-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 0%,rgba(34,197,94,.08),transparent 60%)}
+.auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+.auth-icon{width:52px;height:52px;background:var(--green);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 32px rgba(34,197,94,.4)}
+.auth-title{font-size:28px;font-weight:800}.auth-title span{color:var(--green)}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:420px;box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.tab-row{display:flex;background:var(--bg2);border-radius:10px;padding:4px;margin-bottom:22px;border:1px solid var(--border)}
+.tab-btn{flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;background:transparent;color:var(--text2);transition:all .2s;font-family:inherit}
+.tab-btn.active{background:var(--green);color:#000}
+.verify-box{background:var(--gdim);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:18px;text-align:center;margin-bottom:16px}
+
+/* LAYOUT */
+#app-screen{display:flex;min-height:100vh}
+.sidebar{width:236px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;transition:transform .3s}
+.sidebar-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-icon{width:36px;height:36px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 16px rgba(34,197,94,.3);flex-shrink:0}
+.nav-section{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:10px 10px 5px;margin-top:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;margin-bottom:2px;transition:all .15s;position:relative}
+.nav-item:hover{background:var(--bg3);color:var(--text)}.nav-item.active{background:var(--gdim);color:var(--green)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;background:var(--green);border-radius:0 2px 2px 0}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px}
+.user-card-sb{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--bg3)}
+.user-av{width:32px;height:32px;border-radius:50%;background:var(--gdim);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--green);flex-shrink:0}
+.main{flex:1;margin-left:236px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:90;background:rgba(10,15,10,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.content{padding:20px;flex:1}
+.hamburger{display:none;background:transparent;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px}
+#mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:8px}
+.stat-val{font-size:20px;font-weight:800;line-height:1;margin-bottom:6px}
+.stat-sub{font-size:11px;color:var(--text3)}.stat-icon{position:absolute;top:14px;right:14px;font-size:22px;opacity:.35}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-pad{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.card-title{font-weight:800;font-size:15px}
+.card-foot{padding:11px 18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--text3)}
+.card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* CHART */
+.chart-wrap{display:flex;align-items:flex-end;gap:5px;height:160px;padding:0 4px}
+.bar-group{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}
+.bar-pair{display:flex;gap:2px;align-items:flex-end;height:140px;width:100%}
+.bar{border-radius:4px 4px 0 0;min-height:3px;flex:1}
+.bar-label{font-size:9px;color:var(--text3);margin-top:5px;text-align:center}
+.chart-legend{display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:var(--text2)}
+.ldot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:5px}
+.chart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:var(--text3);gap:8px;text-align:center}
+
+/* TABLES */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg2);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid rgba(42,61,42,.4);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(17,22,17,.5)}
+.empty-td{text-align:center;padding:36px!important;color:var(--text3)}
+.empty-icon{font-size:32px;display:block;margin-bottom:8px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:mIn .2s ease}
+@keyframes mIn{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-weight:800;font-size:16px}
+.modal-close{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:2px}
+.modal-body{padding:18px 22px}.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+/* ALERTS */
+.alert{border-radius:8px;padding:10px 14px;display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-bottom:14px}
+.alert-yellow{background:var(--ydim);border:1px solid rgba(251,191,36,.2);color:var(--yellow)}
+.alert-green{background:var(--gdim);border:1px solid rgba(34,197,94,.2);color:var(--green)}
+.alert-red{background:var(--rdim);border:1px solid rgba(248,113,113,.2);color:var(--red)}
+
+/* SUB BADGES */
+.sub-badge{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
+.sub-active{background:var(--gdim);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.sub-trial{background:var(--ydim);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.sub-pending{background:var(--ydim);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.sub-inactive{background:var(--rdim);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.trial-bar{padding:9px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:13px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.05)}
+
+/* PLAN */
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.plan-card{background:var(--card2);border:2px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s}
+.plan-card.selected{border-color:var(--green);box-shadow:0 0 0 3px var(--gdim)}
+.plan-feat{font-size:12px;color:var(--text2);padding:3px 0;display:flex;gap:6px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.info-row:last-child{border-bottom:none}.info-label{color:var(--text2)}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover,.upload-zone.has-file{border-color:var(--green);background:var(--gdim2)}
+.qty-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;display:inline-flex;align-items:center;justify-content:center}
+.qty-btn:hover{background:var(--gdim);border-color:var(--green);color:var(--green)}
+
+/* TOAST */
+#toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;min-width:220px;max-width:340px;animation:tIn .2s ease;pointer-events:all}
+.t-ok{border-left:3px solid var(--green)}.t-err{border-left:3px solid var(--red)}.t-warn{border-left:3px solid var(--yellow)}.t-info{border-left:3px solid var(--blue)}
+@keyframes tIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:48px;gap:10px;color:var(--text2)}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MARGE BOX */
+.marge-box{background:var(--bg2);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.5)}
+  #mob-overlay.show{display:block}.main{margin-left:0}.hamburger{display:block}
+  .stat-grid{grid-template-columns:1fr 1fr;gap:10px}.stat-val{font-size:16px}
+  .content{padding:14px}.two-col{grid-template-columns:1fr}.plan-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="toast-wrap"></div>
+<div id="mob-overlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════════ AUTH SCREEN ══════════════ -->
+<div id="auth-screen">
+  <div class="auth-brand">
+    <div class="auth-icon">🏪</div>
+    <div class="auth-title">MonComptoir<span>Pro</span></div>
+  </div>
+  <div class="auth-card">
+
+    <!-- Vérification email -->
+    <div id="verify-msg" class="hidden">
+      <div class="verify-box">
+        <div style="font-size:44px;margin-bottom:10px">📧</div>
+        <h3 style="font-size:16px;font-weight:800;color:var(--green);margin-bottom:8px">Vérifiez votre email</h3>
+        <p style="font-size:12px;color:var(--text2);line-height:1.6">Un lien de confirmation a été envoyé à<br><strong id="verify-email"></strong>.<br>Cliquez sur le lien pour activer votre compte.</p>
+      </div>
+      <button class="btn btn-ghost btn-full" onclick="showForms()">← Retour à la connexion</button>
+    </div>
+
+    <div id="auth-forms">
+      <div class="tab-row">
+        <button class="tab-btn active" id="tb-login" onclick="setTab('login')">Connexion</button>
+        <button class="tab-btn" id="tb-register" onclick="setTab('register')">Créer un compte</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="f-login">
+        <div class="fg"><label>Email professionnel</label><input class="inp" id="l-email" type="email" placeholder="vous@entreprise.cm" autocomplete="email"></div>
+        <div class="fg"><label>Mot de passe</label><input class="inp" id="l-pwd" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+        <div id="l-err" class="err-msg hidden"></div>
+        <button class="btn btn-primary btn-full" id="l-btn" onclick="doLogin()" style="margin-bottom:10px">🔐 Se connecter</button>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="setTab('reset')">Mot de passe oublié ?</button>
+        <p style="text-align:center;margin-top:16px;font-size:11px;color:var(--text3)">🇨🇲 Données sécurisées · FCFA · Cameroun</p>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="f-register" class="hidden">
+        <div class="alert alert-green">🎁 <strong>7 jours d'essai gratuit</strong> — aucun paiement à l'inscription</div>
+        <div class="fg"><label>Nom / Raison sociale</label><input class="inp" id="r-name" placeholder="Jean Kamga ou SARL Kamga"></div>
+        <div class="fg"><label>Email professionnel</label><input class="inp" id="r-email" type="email" placeholder="vous@entreprise.cm"></div>
+        <div class="fg"><label>Mot de passe (min. 8 caractères)</label><input class="inp" id="r-pwd" type="password" placeholder="Mot de passe sécurisé"></div>
+        <div class="two-col">
+          <div class="fg"><label>Secteur</label>
+            <select class="sel" id="r-sector">
+              <option value="">Choisir...</option>
+              <option>Commerce général</option><option>Alimentation / Épicerie</option>
+              <option>Électronique / Téléphonie</option><option>Textile / Mode</option>
+              <option>Pharmacie</option><option>Restauration</option><option>Transport</option>
+              <option>BTP</option><option>Agriculture</option><option>Autre</option>
+            </select>
+          </div>
+          <div class="fg"><label>Ville</label>
+            <select class="sel" id="r-city">
+              <option>Douala</option><option>Yaoundé</option><option>Bafoussam</option>
+              <option>Garoua</option><option>Ngaoundéré</option><option>Bertoua</option>
+              <option>Ebolowa</option><option>Buea</option><option>Autre</option>
+            </select>
+          </div>
+        </div>
+        <div id="r-err" class="err-msg hidden"></div>
+        <button class="btn btn-primary btn-full" id="r-btn" onclick="doRegister()">✨ Créer mon compte gratuitement</button>
+      </div>
+
+      <!-- RESET -->
+      <div id="f-reset" class="hidden">
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Entrez votre email pour recevoir un lien de réinitialisation.</p>
+        <div class="fg"><label>Adresse email</label><input class="inp" id="rst-email" type="email" placeholder="vous@entreprise.cm"></div>
+        <div id="rst-err" class="err-msg hidden"></div>
+        <button class="btn btn-primary btn-full" onclick="doReset()" style="margin-bottom:8px">📧 Envoyer le lien</button>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="setTab('login')">← Retour</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ APP SCREEN ══════════════ -->
+<div id="app-screen" class="hidden">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-icon">🏪</div>
+      <div style="font-weight:800;font-size:14px;line-height:1.25">MonComptoir<span style="color:var(--green)">Pro</span><br><small style="font-size:10px;color:var(--text2);font-weight:400">Gestion Commerciale</small></div>
+    </div>
+    <nav style="flex:1;padding:10px 8px;overflow-y:auto" id="sidebar-nav"></nav>
+    <div style="padding:10px 8px;border-top:1px solid var(--border)">
+      <div class="user-card-sb">
+        <div class="user-av" id="u-av">??</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="u-name">…</div>
+          <div style="font-size:10px;color:var(--text2)" id="u-role">…</div>
+        </div>
+        <button onclick="doLogout()" title="Déconnexion" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">⏻</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span style="font-weight:800;font-size:17px" id="topbar-title">Tableau de bord</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="sub-badge sub-active" id="topbar-badge">✓ Actif</span>
+        <div style="width:1px;height:24px;background:var(--border)"></div>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">⏻ Déconnexion</button>
+      </div>
+    </div>
+    <div id="trial-bar" class="hidden trial-bar"></div>
+    <div class="content" id="page-content">
+      <div class="loading"><div class="spinner"></div> Chargement…</div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIG — Remplacez ANON_KEY par votre clé depuis supabase.com
+// ══════════════════════════════════════════════════════════════
+const SUPA_URL = 'https://xbxmuwifoeuxsmkdjvrc.supabase.co';
+const SUPA_KEY = 'VOTRE_ANON_KEY_ICI'; // ← Remplacez ceci !
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ══════════════════════════════════════════════════════════════
+// ÉTAT GLOBAL
+// ══════════════════════════════════════════════════════════════
+let APP = { user:null, profile:null, page:'dashboard', selPlan:'monthly' };
+
+// ══════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ══════════════════════════════════════════════════════════════
+const fmt  = n => new Intl.NumberFormat('fr-CM').format(n||0)+' FCFA';
+const fmtD = d => d ? new Date(d).toLocaleDateString('fr-CM',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+const fmtS = d => d ? new Date(d).toLocaleDateString('fr-CM',{day:'2-digit',month:'short'}) : '—';
+const today= () => new Date().toISOString().slice(0,10);
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function trialDays(){if(!APP.profile?.trial_end)return 0;return Math.max(0,Math.ceil((new Date(APP.profile.trial_end)-new Date())/86400000));}
+function canAccess(){
+  if(!APP.profile)return false;
+  if(APP.profile.role==='admin')return true;
+  if(APP.profile.subscription_status==='active')return true;
+  if(APP.profile.subscription_status==='trial'&&trialDays()>0)return true;
+  return false;
+}
+const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+// ══════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════
+function toast(msg,type='ok'){
+  const icons={ok:'✅',err:'❌',warn:'⚠️',info:'ℹ️'};
+  const el=document.createElement('div');
+  el.className=`toast t-${type}`;
+  el.innerHTML=`<span>${icons[type]}</span><span>${esc(msg)}</span>`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTH UI
+// ══════════════════════════════════════════════════════════════
+let curTab='login';
+function setTab(t){
+  curTab=t;
+  ['login','register','reset'].forEach(x=>{
+    document.getElementById('f-'+x).classList.toggle('hidden',x!==t);
+  });
+  document.getElementById('tb-login').classList.toggle('active',t==='login');
+  document.getElementById('tb-register').classList.toggle('active',t==='register');
+}
+function showForms(){
+  document.getElementById('verify-msg').classList.add('hidden');
+  document.getElementById('auth-forms').classList.remove('hidden');
+  setTab('login');
+}
+function showErr(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('hidden');}}
+function clearErr(id){const el=document.getElementById(id);if(el){el.textContent='';el.classList.add('hidden');}}
+function setLoading(id,on,text=''){
+  const b=document.getElementById(id);if(!b)return;
+  b.disabled=on;
+  if(on)b.innerHTML='<div class="spinner" style="width:16px;height:16px"></div>';
+  else if(text)b.textContent=text;
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTH ACTIONS
+// ══════════════════════════════════════════════════════════════
+async function doLogin(){
+  clearErr('l-err');
+  const email=document.getElementById('l-email').value.trim();
+  const pwd=document.getElementById('l-pwd').value;
+  if(!email||!pwd){showErr('l-err','Veuillez remplir tous les champs.');return;}
+  setLoading('l-btn',true);
+  const {error}=await sb.auth.signInWithPassword({email,password:pwd});
+  setLoading('l-btn',false,'🔐 Se connecter');
+  if(error){
+    const m={'Invalid login credentials':'Email ou mot de passe incorrect.','Email not confirmed':'Confirmez votre email avant de vous connecter.'};
+    showErr('l-err',m[error.message]||error.message);
+  }
+}
+
+async function doRegister(){
+  clearErr('r-err');
+  const name=document.getElementById('r-name').value.trim();
+  const email=document.getElementById('r-email').value.trim();
+  const pwd=document.getElementById('r-pwd').value;
+  const sector=document.getElementById('r-sector').value;
+  const city=document.getElementById('r-city').value;
+  if(!name||!email||!pwd){showErr('r-err','Veuillez remplir tous les champs.');return;}
+  if(pwd.length<8){showErr('r-err','Mot de passe : minimum 8 caractères.');return;}
+  setLoading('r-btn',true);
+  const te=new Date();te.setDate(te.getDate()+7);
+  const {data,error}=await sb.auth.signUp({email,password:pwd,options:{data:{name,sector,city},emailRedirectTo:window.location.href}});
+  setLoading('r-btn',false,'✨ Créer mon compte gratuitement');
+  if(error){showErr('r-err',error.message);return;}
+  if(data.user){
+    await sb.from('profiles').upsert({
+      id:data.user.id,email,name,sector:sector||null,city:city||null,
+      role:'user',subscription_status:'trial',trial_end:te.toISOString()
+    });
+  }
+  document.getElementById('verify-email').textContent=email;
+  document.getElementById('auth-forms').classList.add('hidden');
+  document.getElementById('verify-msg').classList.remove('hidden');
+}
+
+async function doReset(){
+  clearErr('rst-err');
+  const email=document.getElementById('rst-email').value.trim();
+  if(!email){showErr('rst-err','Entrez votre adresse email.');return;}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+  if(error){showErr('rst-err',error.message);return;}
+  toast('Lien envoyé à '+email,'info');
+  setTab('login');
+}
+
+async function doLogout(){await sb.auth.signOut();}
+
+// ══════════════════════════════════════════════════════════════
+// SESSION
+// ══════════════════════════════════════════════════════════════
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session?.user){
+    APP.user=session.user;
+    await loadProfile();
+    showApp();
+  } else if(event==='SIGNED_OUT'||!session){
+    APP.user=null;APP.profile=null;
+    showAuth();
+  }
+});
+
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session?.user){APP.user=session.user;await loadProfile();showApp();}
+  else showAuth();
+})();
+
+async function loadProfile(){
+  if(!APP.user)return;
+  const {data}=await sb.from('profiles').select('*').eq('id',APP.user.id).single();
+  if(data){APP.profile=data;}
+  else{
+    const te=new Date();te.setDate(te.getDate()+7);
+    const p={id:APP.user.id,email:APP.user.email,name:APP.user.user_metadata?.name||APP.user.email.split('@')[0],role:'user',subscription_status:'trial',trial_end:te.toISOString()};
+    await sb.from('profiles').insert(p);
+    APP.profile=p;
+  }
+}
+
+function showAuth(){
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('app-screen').classList.add('hidden');
+}
+
+function showApp(){
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  buildSidebar();
+  updateHeader();
+  navigate('dashboard');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════════════════════
+const NAV=[
+  {id:'dashboard',icon:'📊',label:'Tableau de bord'},
+  {id:'sales',icon:'💰',label:'Ventes'},
+  {id:'expenses',icon:'📤',label:'Charges & Dépenses'},
+  {id:'stock',icon:'📦',label:'Articles & Stock',badge:true},
+  {id:'clients',icon:'👥',label:'Portefeuille Clients'},
+  {id:'reports',icon:'📄',label:'Rapports & PDF'},
+  {id:'subscription',icon:'💳',label:'Abonnement'},
+];
+
+async function buildSidebar(){
+  const {data:P}=await sb.from('products').select('quantity,min_quantity').eq('user_id',APP.user.id);
+  const low=(P||[]).filter(p=>(Number(p.quantity)||0)<=(Number(p.min_quantity)||0)).length;
+  let html='<div class="nav-section">Menu principal</div>';
+  NAV.forEach(it=>{
+    const bdg=it.badge&&low>0?`<span class="nav-badge">${low}</span>`:'';
+    html+=`<div class="nav-item${APP.page===it.id?' active':''}" onclick="navigate('${it.id}')">
+      <span style="font-size:16px;width:20px;text-align:center">${it.icon}</span>
+      <span style="flex:1">${it.label}</span>${bdg}</div>`;
+  });
+  if(APP.profile?.role==='admin'){
+    const {count}=await sb.from('subscriptions').select('id',{count:'exact',head:true}).eq('status','pending');
+    const aBdg=count>0?`<span class="nav-badge">${count}</span>`:'';
+    html+=`<div class="nav-section">Administration</div>
+    <div class="nav-item${APP.page==='admin'?' active':''}" onclick="navigate('admin')">
+      <span style="font-size:16px;width:20px;text-align:center">⚙️</span><span style="flex:1">Administration</span>${aBdg}</div>`;
+  }
+  document.getElementById('sidebar-nav').innerHTML=html;
+}
+
+function updateHeader(){
+  const name=APP.profile?.name||APP.user?.email||'Utilisateur';
+  const ini=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const role=APP.profile?.role==='admin'?'👑 Administrateur':'🏪 Commerçant';
+  document.getElementById('u-av').textContent=ini;
+  document.getElementById('u-name').textContent=name;
+  document.getElementById('u-role').textContent=role;
+  // Badge topbar
+  const sub=APP.profile?.subscription_status||'inactive';
+  const days=trialDays();
+  const bMap={active:['sub-active','✓ Abonné'],trial:['sub-trial',`🎁 Essai ${days}j`],pending:['sub-pending','⏳ En attente'],inactive:['sub-inactive','✗ Inactif']};
+  const [cls,txt]=bMap[sub]||['sub-inactive','✗'];
+  const badge=document.getElementById('topbar-badge');
+  badge.className=`sub-badge ${cls}`;badge.textContent=txt;
+  // Trial bar
+  const bar=document.getElementById('trial-bar');
+  if(sub==='trial'&&days>0){
+    bar.classList.remove('hidden');
+    const tc=days>4?'var(--green)':days>2?'var(--yellow)':'var(--red)';
+    const bc=days>4?'var(--gdim)':days>2?'var(--ydim)':'var(--rdim)';
+    bar.style.background=bc;
+    bar.innerHTML=`<span style="color:${tc}">🎁 Essai gratuit · <strong>${days} jour${days>1?'s':''} restant${days>1?'s':''}</strong></span><button class="btn btn-primary btn-sm" onclick="navigate('subscription')">💳 S'abonner maintenant</button>`;
+  } else bar.classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+const TITLES={dashboard:'📊 Tableau de bord',sales:'💰 Ventes',expenses:'📤 Charges & Dépenses',stock:'📦 Articles & Stock',clients:'👥 Portefeuille Clients',reports:'📄 Rapports & PDF',subscription:'💳 Abonnement',admin:'⚙️ Administration'};
+
+async function navigate(page){
+  APP.page=page;
+  document.getElementById('topbar-title').textContent=TITLES[page]||page;
+  document.getElementById('page-content').innerHTML='<div class="loading"><div class="spinner"></div> Chargement…</div>';
+  closeSidebar();buildSidebar();
+  if(!canAccess()&&page!=='subscription'){renderLocked();return;}
+  const renders={dashboard:renderDashboard,sales:renderSales,expenses:renderExpenses,stock:renderStock,clients:renderClients,reports:renderReports,subscription:renderSubscription,admin:renderAdmin};
+  if(renders[page])await renders[page]();
+}
+
+function set(html){document.getElementById('page-content').innerHTML=html;}
+
+function renderLocked(){
+  set(`<div style="text-align:center;padding:60px 20px">
+    <div style="font-size:64px;margin-bottom:16px">🔒</div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:8px">Accès restreint</h2>
+    <p style="color:var(--text2);margin-bottom:24px">Votre essai gratuit est terminé. Abonnez-vous pour continuer.</p>
+    <button class="btn btn-primary" onclick="navigate('subscription')">💳 Voir les offres</button>
+  </div>`);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD — Données réelles Supabase uniquement
+// ══════════════════════════════════════════════════════════════
+async function renderDashboard(){
+  const uid=APP.user.id;
+  const [{data:S},{data:E},{data:P}]=await Promise.all([
+    sb.from('sales').select('amount,date,client_name,category').eq('user_id',uid).order('date',{ascending:false}),
+    sb.from('expenses').select('amount,date,category').eq('user_id',uid).order('date',{ascending:false}),
+    sb.from('products').select('quantity,buy_price,min_quantity,name').eq('user_id',uid),
+  ]);
+  const sales=S||[],expenses=E||[],products=P||[];
+  const totalR=sales.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const totalE=expenses.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const profit=totalR-totalE;
+  const stockV=products.reduce((s,p)=>s+((Number(p.quantity)||0)*(Number(p.buy_price)||0)),0);
+  const low=products.filter(p=>(Number(p.quantity)||0)<=(Number(p.min_quantity)||0));
+
+  // Chart 6 mois
+  const now=new Date();
+  const chartPts=Array.from({length:6},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    const filt=arr=>arr.filter(x=>{const xd=new Date(x.date);return xd.getFullYear()===y&&xd.getMonth()===m;});
+    return{m:MOIS[m],r:filt(sales).reduce((s,x)=>s+(Number(x.amount)||0),0),d:filt(expenses).reduce((s,x)=>s+(Number(x.amount)||0),0)};
+  });
+  const maxV=Math.max(...chartPts.map(c=>Math.max(c.r,c.d)),1);
+  const hasData=chartPts.some(c=>c.r>0||c.d>0);
+
+  const bars=chartPts.map(c=>`<div class="bar-group">
+    <div class="bar-pair">
+      <div class="bar" style="height:${Math.round((c.r/maxV)*130)}px;background:rgba(34,197,94,.65)" title="Recettes: ${fmt(c.r)}"></div>
+      <div class="bar" style="height:${Math.round((c.d/maxV)*130)}px;background:rgba(248,113,113,.55)" title="Charges: ${fmt(c.d)}"></div>
+    </div><div class="bar-label">${c.m}</div></div>`).join('');
+
+  const lowAlert=low.length>0?`<div class="alert alert-yellow">⚠️ <span><strong>${low.length} article(s)</strong> en rupture imminente : ${low.map(p=>esc(p.name)).join(', ')}</span></div>`:'';
+
+  const rsRows=sales.length===0
+    ?`<tr><td class="empty-td" colspan="3"><span class="empty-icon">💸</span>Aucune vente enregistrée</td></tr>`
+    :sales.slice(0,5).map(s=>`<tr><td><strong>${esc(s.client_name||'—')}</strong></td><td class="c-green fw7">${fmt(s.amount)}</td><td style="color:var(--text3);font-size:11px">${fmtS(s.date)}</td></tr>`).join('');
+
+  const reRows=expenses.length===0
+    ?`<tr><td class="empty-td" colspan="3"><span class="empty-icon">📋</span>Aucune charge enregistrée</td></tr>`
+    :expenses.slice(0,5).map(e=>`<tr><td><span class="tag tag-yellow">${esc(e.category||'Autre')}</span></td><td class="c-red fw7">${fmt(e.amount)}</td><td style="color:var(--text3);font-size:11px">${fmtS(e.date)}</td></tr>`).join('');
+
+  set(`${lowAlert}
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Chiffre d'affaires</div><div class="stat-val c-green">${fmt(totalR)}</div><div class="stat-sub">${sales.length} transaction${sales.length!==1?'s':''}</div><div class="stat-icon">💰</div></div>
+    <div class="stat-card"><div class="stat-label">Total charges</div><div class="stat-val c-red">${fmt(totalE)}</div><div class="stat-sub">${expenses.length} dépense${expenses.length!==1?'s':''}</div><div class="stat-icon">📤</div></div>
+    <div class="stat-card"><div class="stat-label">Résultat net</div><div class="stat-val ${profit>=0?'c-green':'c-red'}">${fmt(Math.abs(profit))}</div><div class="stat-sub">${profit>=0?'✅ Bénéficiaire':'⚠️ Déficitaire'}</div><div class="stat-icon">${profit>=0?'📈':'📉'}</div></div>
+    <div class="stat-card"><div class="stat-label">Valeur du stock</div><div class="stat-val c-yellow">${fmt(stockV)}</div><div class="stat-sub">${products.length} référence${products.length!==1?'s':''}</div><div class="stat-icon">📦</div></div>
+  </div>
+  <div class="card-pad">
+    <div class="card-title" style="margin-bottom:14px">📈 Évolution financière — 6 derniers mois</div>
+    <div class="chart-legend"><span><span class="ldot" style="background:rgba(34,197,94,.65)"></span>Recettes</span><span><span class="ldot" style="background:rgba(248,113,113,.55)"></span>Charges</span></div>
+    ${hasData?`<div class="chart-wrap">${bars}</div>`:`<div class="chart-empty"><span style="font-size:40px">📭</span><strong>Pas encore de données</strong><small>Les graphiques s'afficheront après vos premières saisies</small></div>`}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card"><div class="card-head"><span class="card-title">🆕 Dernières ventes</span><button class="btn btn-ghost btn-xs" onclick="navigate('sales')">Voir tout →</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Client</th><th>Montant</th><th>Date</th></tr></thead><tbody>${rsRows}</tbody></table></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">🔴 Dernières charges</span><button class="btn btn-ghost btn-xs" onclick="navigate('expenses')">Voir tout →</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Catégorie</th><th>Montant</th><th>Date</th></tr></thead><tbody>${reRows}</tbody></table></div></div>
+  </div>`);
+}
+
+// ══════════════════════════════════════════════════════════════
+// VENTES
+// ══════════════════════════════════════════════════════════════
+async function renderSales(){
+  const {data}=await sb.from('sales').select('*').eq('user_id',APP.user.id).order('date',{ascending:false});
+  const S=data||[];
+  const total=S.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const rows=S.length===0
+    ?`<tr><td class="empty-td" colspan="6"><span class="empty-icon">💸</span>Aucune vente. Cliquez « Nouvelle vente » pour commencer.</td></tr>`
+    :S.map(s=>`<tr>
+      <td style="color:var(--text3);font-size:11px;white-space:nowrap">${fmtD(s.date)}</td>
+      <td><strong>${esc(s.client_name||'—')}</strong></td>
+      <td style="color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.description||'')}</td>
+      <td><span class="tag tag-blue">${esc(s.category||'—')}</span></td>
+      <td class="c-green fw7">${fmt(s.amount)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-xs" onclick="editSale('${s.id}')">✏️</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteSale('${s.id}')">🗑️</button>
+        <button class="btn btn-ghost btn-xs" onclick="genInvoicePDF('${s.id}')" title="Facture PDF">🧾</button>
+      </div></td></tr>`).join('');
+  set(`<div class="card">
+    <div class="card-head"><span class="card-title">💰 Registre des Ventes</span>
+    <div class="card-actions">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 12px">🔍 <input placeholder="Rechercher…" oninput="filterTable(this.value,'sales-body','sales-cache')" style="border:none;background:transparent;color:var(--text);font-size:13px;outline:none;font-family:inherit;width:140px"></div>
+      <button class="btn btn-primary btn-sm" onclick="openSaleModal(null)">＋ Nouvelle vente</button>
+    </div></div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Client</th><th>Description</th><th>Catégorie</th><th>Montant HT</th><th>Actions</th></tr></thead>
+    <tbody id="sales-body">${rows}</tbody></table></div>
+    <div class="card-foot">
+      <span>CA total : <strong class="c-green">${fmt(total)}</strong></span>
+      <span>${S.length} transaction${S.length!==1?'s':''}</span>
+      <button class="btn btn-ghost btn-xs" onclick="exportCSV(${JSON.stringify(S.map(s=>({Date:s.date,Client:s.client_name,Description:s.description,Catégorie:s.category,Montant:s.amount})))}, 'ventes')">📊 Export CSV</button>
+    </div></div>`);
+}
+
+function openSaleModal(sale){
+  const s=sale;
+  const cats=['Alimentation','Électronique','Textile','Beauté & Cosmétiques','Pharmacie','BTP','Agriculture','Services','Autre'];
+  const catOpts=cats.map(c=>`<option${s?.category===c?' selected':''}>${c}</option>`).join('');
+  showModal(s?'✏️ Modifier la vente':'＋ Nouvelle vente',
+    `<div class="two-col">
+      <div class="fg"><label>Date de transaction</label><input class="inp" id="m-date" type="date" value="${s?.date||today()}"></div>
+      <div class="fg"><label>Client</label><input class="inp" id="m-client" placeholder="Nom du client" value="${esc(s?.client_name||'')}"></div>
+    </div>
+    <div class="fg"><label>Description / Libellé</label><input class="inp" id="m-desc" placeholder="Ex: Vente riz parfumé 50kg" value="${esc(s?.description||'')}"></div>
+    <div class="two-col">
+      <div class="fg"><label>Catégorie</label><select class="sel" id="m-cat">${catOpts}</select></div>
+      <div class="fg"><label>Montant (FCFA)</label><input class="inp" id="m-amount" type="number" min="0" placeholder="0" value="${s?.amount||''}"></div>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+     <button class="btn btn-primary" onclick="saveSale('${s?.id||''}')">💾 Enregistrer</button>`);
+}
+
+async function editSale(id){
+  const {data}=await sb.from('sales').select('*').eq('id',id).single();
+  if(data)openSaleModal(data);
+}
+
+async function saveSale(id){
+  const date=document.getElementById('m-date').value;
+  const client=document.getElementById('m-client').value.trim();
+  const desc=document.getElementById('m-desc').value.trim();
+  const cat=document.getElementById('m-cat').value;
+  const amount=parseFloat(document.getElementById('m-amount').value);
+  if(!date||!amount){toast('Date et montant obligatoires.','err');return;}
+  const payload={date,client_name:client,description:desc,category:cat,amount,user_id:APP.user.id};
+  if(id){await sb.from('sales').update(payload).eq('id',id).eq('user_id',APP.user.id);toast('Vente mise à jour !');}
+  else{await sb.from('sales').insert(payload);toast('Vente enregistrée !');}
+  closeModal();await renderSales();
+}
+
+async function deleteSale(id){
+  if(!confirm('Supprimer cette vente ?'))return;
+  await sb.from('sales').delete().eq('id',id).eq('user_id',APP.user.id);
+  toast('Vente supprimée','warn');await renderSales();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DÉPENSES
+// ══════════════════════════════════════════════════════════════
+async function renderExpenses(){
+  const {data}=await sb.from('expenses').select('*').eq('user_id',APP.user.id).order('date',{ascending:false});
+  const E=data||[];
+  const total=E.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const rows=E.length===0
+    ?`<tr><td class="empty-td" colspan="5"><span class="empty-icon">📋</span>Aucune charge enregistrée.</td></tr>`
+    :E.map(e=>`<tr>
+      <td style="color:var(--text3);font-size:11px;white-space:nowrap">${fmtD(e.date)}</td>
+      <td><span class="tag tag-yellow">${esc(e.category||'Autre')}</span></td>
+      <td style="color:var(--text2)">${esc(e.description||'')}</td>
+      <td class="c-red fw7">${fmt(e.amount)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-xs" onclick="editExpense('${e.id}')">✏️</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteExpense('${e.id}')">🗑️</button>
+      </div></td></tr>`).join('');
+  set(`<div class="card">
+    <div class="card-head"><span class="card-title">📤 Registre des Charges</span>
+    <div class="card-actions"><button class="btn btn-primary btn-sm" onclick="openExpModal(null)">＋ Nouvelle charge</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Catégorie</th><th>Description</th><th>Montant</th><th>Actions</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="card-foot">
+      <span>Total charges : <strong class="c-red">${fmt(total)}</strong></span>
+      <span>${E.length} enregistrement${E.length!==1?'s':''}</span>
+      <button class="btn btn-ghost btn-xs" onclick="exportCSV(${JSON.stringify(E.map(e=>({Date:e.date,Catégorie:e.category,Description:e.description,Montant:e.amount})))}, 'charges')">📊 Export CSV</button>
+    </div></div>`);
+}
+
+function openExpModal(exp){
+  const e=exp;
+  const cats=['Loyer / Bail','Salaires & RH','Achats de stock','Transport / Livraison','Communication','Eau / Électricité','Équipements','Frais bancaires','Marketing','Impôts / Taxes','Autre'];
+  const catOpts=cats.map(c=>`<option${e?.category===c?' selected':''}>${c}</option>`).join('');
+  showModal(e?'✏️ Modifier la charge':'＋ Nouvelle charge',
+    `<div class="two-col">
+      <div class="fg"><label>Date</label><input class="inp" id="m-date" type="date" value="${e?.date||today()}"></div>
+      <div class="fg"><label>Catégorie</label><select class="sel" id="m-cat">${catOpts}</select></div>
+    </div>
+    <div class="fg"><label>Description / Libellé</label><input class="inp" id="m-desc" placeholder="Ex: Loyer boutique juin" value="${esc(e?.description||'')}"></div>
+    <div class="fg"><label>Montant (FCFA)</label><input class="inp" id="m-amount" type="number" min="0" placeholder="0" value="${e?.amount||''}"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+     <button class="btn btn-primary" onclick="saveExpense('${e?.id||''}')">💾 Enregistrer</button>`);
+}
+
+async function editExpense(id){
+  const {data}=await sb.from('expenses').select('*').eq('id',id).single();
+  if(data)openExpModal(data);
+}
+
+async function saveExpense(id){
+  const date=document.getElementById('m-date').value;
+  const cat=document.getElementById('m-cat').value;
+  const desc=document.getElementById('m-desc').value.trim();
+  const amount=parseFloat(document.getElementById('m-amount').value);
+  if(!date||!amount){toast('Date et montant obligatoires.','err');return;}
+  const payload={date,category:cat,description:desc,amount,user_id:APP.user.id};
+  if(id){await sb.from('expenses').update(payload).eq('id',id).eq('user_id',APP.user.id);toast('Charge mise à jour !');}
+  else{await sb.from('expenses').insert(payload);toast('Charge enregistrée !');}
+  closeModal();await renderExpenses();
+}
+
+async function deleteExpense(id){
+  if(!confirm('Supprimer cette charge ?'))return;
+  await sb.from('expenses').delete().eq('id',id).eq('user_id',APP.user.id);
+  toast('Charge supprimée','warn');await renderExpenses();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STOCK
+// ══════════════════════════════════════════════════════════════
+async function renderStock(){
+  const {data}=await sb.from('products').select('*').eq('user_id',APP.user.id).order('name');
+  const P=data||[];
+  const low=P.filter(p=>(Number(p.quantity)||0)<=(Number(p.min_quantity)||0));
+  const stockV=P.reduce((s,p)=>s+((Number(p.quantity)||0)*(Number(p.buy_price)||0)),0);
+  const lowAlert=low.length>0?`<div class="alert alert-yellow">⚠️ <strong>${low.length} article(s) en rupture imminente</strong> : ${low.map(p=>esc(p.name)).join(', ')}</div>`:'';
+  const rows=P.length===0
+    ?`<tr><td class="empty-td" colspan="9"><span class="empty-icon">📦</span>Aucun article. Ajoutez vos premiers produits.</td></tr>`
+    :P.map(p=>{
+      const mg=(Number(p.sell_price)||0)-(Number(p.buy_price)||0);
+      const mgP=p.buy_price>0?((mg/p.buy_price)*100).toFixed(0):0;
+      const isLow=(Number(p.quantity)||0)<=(Number(p.min_quantity)||0);
+      return`<tr>
+        <td><strong>${esc(p.name)}</strong>${p.sku?`<br><span style="font-size:10px;color:var(--text3)">Réf: ${esc(p.sku)}</span>`:''}</td>
+        <td><span class="tag tag-blue">${esc(p.category||'—')}</span></td>
+        <td><div style="display:flex;align-items:center;gap:6px">
+          <button class="qty-btn" onclick="adjQty('${p.id}',-1)">−</button>
+          <strong style="min-width:26px;text-align:center">${Number(p.quantity)||0}</strong>
+          <button class="qty-btn" onclick="adjQty('${p.id}',1)">+</button>
+        </div></td>
+        <td style="color:var(--text2)">${fmt(p.buy_price)}</td>
+        <td style="font-weight:600">${fmt(p.sell_price)}</td>
+        <td class="c-green">+${fmt(mg)}<br><small>${mgP}%</small></td>
+        <td style="color:var(--text3);font-size:12px">${Number(p.min_quantity)||0}</td>
+        <td><span class="tag ${isLow?'tag-red':'tag-green'}">${isLow?'⚠️ Critique':'✓ OK'}</span></td>
+        <td><div style="display:flex;gap:5px">
+          <button class="btn btn-ghost btn-xs" onclick="editProduct('${p.id}')">✏️</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">🗑️</button>
+        </div></td></tr>`;
+    }).join('');
+  set(`${lowAlert}
+  <div class="card">
+    <div class="card-head"><span class="card-title">📦 Articles & Gestion du Stock</span>
+    <div class="card-actions"><button class="btn btn-primary btn-sm" onclick="openProductModal(null)">＋ Nouvel article</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Désignation</th><th>Catégorie</th><th>Qté en stock</th><th>Prix achat</th><th>Prix vente</th><th>Marge</th><th>Seuil</th><th>Statut</th><th>Actions</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="card-foot"><span>Valeur du stock : <strong class="c-yellow">${fmt(stockV)}</strong></span><span>${P.length} référence${P.length!==1?'s':''}</span></div>
+  </div>`);
+}
+
+async function adjQty(id,delta){
+  const {data}=await sb.from('products').select('quantity').eq('id',id).single();
+  const nq=Math.max(0,(Number(data?.quantity)||0)+delta);
+  await sb.from('products').update({quantity:nq}).eq('id',id).eq('user_id',APP.user.id);
+  await renderStock();buildSidebar();
+}
+
+function openProductModal(prod){
+  const p=prod;
+  const cats=['Alimentation','Électronique','Textile','Beauté','Pharmacie','BTP','Agriculture','Autre'];
+  const catOpts=cats.map(c=>`<option${p?.category===c?' selected':''}>${c}</option>`).join('');
+  showModal(p?'✏️ Modifier l\'article':'＋ Nouvel article',
+    `<div class="fg"><label>Désignation de l'article</label><input class="inp" id="m-name" placeholder="Ex: Riz parfumé 5kg" value="${esc(p?.name||'')}"></div>
+    <div class="two-col">
+      <div class="fg"><label>Catégorie</label><select class="sel" id="m-cat">${catOpts}</select></div>
+      <div class="fg"><label>Référence / SKU</label><input class="inp" id="m-sku" placeholder="Optionnel" value="${esc(p?.sku||'')}"></div>
+    </div>
+    <div class="two-col">
+      <div class="fg"><label>Quantité en stock</label><input class="inp" id="m-qty" type="number" min="0" placeholder="0" value="${p?.quantity||0}"></div>
+      <div class="fg"><label>Seuil d'alerte</label><input class="inp" id="m-min" type="number" min="0" placeholder="5" value="${p?.min_quantity||5}"></div>
+    </div>
+    <div class="two-col">
+      <div class="fg"><label>Prix d'achat (FCFA)</label><input class="inp" id="m-buy" type="number" min="0" placeholder="0" value="${p?.buy_price||''}" oninput="calcMarge()"></div>
+      <div class="fg"><label>Prix de vente (FCFA)</label><input class="inp" id="m-sell" type="number" min="0" placeholder="0" value="${p?.sell_price||''}" oninput="calcMarge()"></div>
+    </div>
+    <div class="marge-box">Marge brute : <strong id="marge-val" class="c-green">—</strong></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+     <button class="btn btn-primary" onclick="saveProduct('${p?.id||''}')">💾 Enregistrer</button>`);
+  if(p)setTimeout(calcMarge,50);
+}
+
+function calcMarge(){
+  const buy=parseFloat(document.getElementById('m-buy')?.value)||0;
+  const sell=parseFloat(document.getElementById('m-sell')?.value)||0;
+  const mg=sell-buy,mgP=buy>0?((mg/buy)*100).toFixed(1):0;
+  const el=document.getElementById('marge-val');
+  if(el){el.textContent=`${fmt(mg)} (${mgP}%)`;el.style.color=mg>=0?'var(--green)':'var(--red)';}
+}
+
+async function editProduct(id){
+  const {data}=await sb.from('products').select('*').eq('id',id).single();
+  if(data)openProductModal(data);
+}
+
+async function saveProduct(id){
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){toast('La désignation est obligatoire.','err');return;}
+  const payload={name,category:document.getElementById('m-cat').value,sku:document.getElementById('m-sku').value.trim()||null,quantity:parseInt(document.getElementById('m-qty').value)||0,min_quantity:parseInt(document.getElementById('m-min').value)||5,buy_price:parseFloat(document.getElementById('m-buy').value)||0,sell_price:parseFloat(document.getElementById('m-sell').value)||0,user_id:APP.user.id};
+  if(id){await sb.from('products').update(payload).eq('id',id).eq('user_id',APP.user.id);toast('Article mis à jour !');}
+  else{await sb.from('products').insert(payload);toast('Article ajouté !');}
+  closeModal();await renderStock();buildSidebar();
+}
+
+async function deleteProduct(id){
+  if(!confirm('Supprimer cet article ?'))return;
+  await sb.from('products').delete().eq('id',id).eq('user_id',APP.user.id);
+  toast('Article supprimé','warn');await renderStock();
+}
+
+// ══════════════════════════════════════════════════════════════
+// CLIENTS
+// ══════════════════════════════════════════════════════════════
+async function renderClients(){
+  const {data}=await sb.from('clients').select('*').eq('user_id',APP.user.id).order('name');
+  const C=data||[];
+  const totalCA=C.reduce((s,c)=>s+(Number(c.total_spent)||0),0);
+  const rows=C.length===0
+    ?`<tr><td class="empty-td" colspan="5"><span class="empty-icon">👥</span>Aucun client enregistré.</td></tr>`
+    :C.map(c=>{
+      const ini=(c.name||'?').slice(0,2).toUpperCase();
+      return`<tr>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="user-av" style="width:28px;height:28px;font-size:11px">${ini}</div>
+          <div><strong>${esc(c.name)}</strong>${c.company?`<br><span style="font-size:11px;color:var(--text3)">${esc(c.company)}</span>`:''}</div>
+        </div></td>
+        <td style="color:var(--text2)">📱 ${esc(c.phone||'—')}</td>
+        <td><span class="tag tag-blue">📍 ${esc(c.city||'—')}</span></td>
+        <td class="c-green fw7">${fmt(c.total_spent||0)}</td>
+        <td><div style="display:flex;gap:5px">
+          <button class="btn btn-ghost btn-xs" onclick="editClient('${c.id}')">✏️</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteClient('${c.id}')">🗑️</button>
+        </div></td></tr>`;
+    }).join('');
+  set(`<div class="card">
+    <div class="card-head"><span class="card-title">👥 Portefeuille Clients</span>
+    <div class="card-actions"><button class="btn btn-primary btn-sm" onclick="openClientModal(null)">＋ Nouveau client</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Client</th><th>Téléphone</th><th>Localité</th><th>CA réalisé</th><th>Actions</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div class="card-foot"><span>${C.length} client${C.length!==1?'s':''} · CA total : <strong class="c-green">${fmt(totalCA)}</strong></span>
+    <button class="btn btn-ghost btn-xs" onclick="exportCSV(${JSON.stringify(C.map(c=>({Nom:c.name,Entreprise:c.company,Téléphone:c.phone,Ville:c.city,'CA Total':c.total_spent})))}, 'clients')">📊 Export CSV</button></div>
+  </div>`);
+}
+
+function openClientModal(client){
+  const c=client;
+  const cities=['Douala','Yaoundé','Bafoussam','Garoua','Ngaoundéré','Bertoua','Ebolowa','Buea','Autre'];
+  const cOpts=cities.map(v=>`<option${c?.city===v?' selected':''}>${v}</option>`).join('');
+  showModal(c?'✏️ Modifier le client':'＋ Nouveau client',
+    `<div class="fg"><label>Nom complet</label><input class="inp" id="m-name" placeholder="Jean Kamga" value="${esc(c?.name||'')}"></div>
+    <div class="fg"><label>Raison sociale (optionnel)</label><input class="inp" id="m-company" placeholder="SARL Kamga & Fils" value="${esc(c?.company||'')}"></div>
+    <div class="two-col">
+      <div class="fg"><label>Téléphone</label><input class="inp" id="m-phone" placeholder="6XXXXXXXX" value="${esc(c?.phone||'')}"></div>
+      <div class="fg"><label>Localité</label><select class="sel" id="m-city">${cOpts}</select></div>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+     <button class="btn btn-primary" onclick="saveClient('${c?.id||''}')">💾 Enregistrer</button>`);
+}
+
+async function editClient(id){
+  const {data}=await sb.from('clients').select('*').eq('id',id).single();
+  if(data)openClientModal(data);
+}
+
+async function saveClient(id){
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){toast('Le nom est obligatoire.','err');return;}
+  const payload={name,company:document.getElementById('m-company').value.trim()||null,phone:document.getElementById('m-phone').value.trim()||null,city:document.getElementById('m-city').value,user_id:APP.user.id};
+  if(id){await sb.from('clients').update(payload).eq('id',id).eq('user_id',APP.user.id);toast('Client mis à jour !');}
+  else{await sb.from('clients').insert(payload);toast('Client ajouté !');}
+  closeModal();await renderClients();
+}
+
+async function deleteClient(id){
+  if(!confirm('Supprimer ce client ?'))return;
+  await sb.from('clients').delete().eq('id',id).eq('user_id',APP.user.id);
+  toast('Client supprimé','warn');await renderClients();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RAPPORTS
+// ══════════════════════════════════════════════════════════════
+async function renderReports(){
+  set(`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+    ${[
+      {icon:'📋',title:'Rapport mensuel PDF',desc:'Synthèse : CA, charges, résultat, stock',fn:'genMonthlyPDF()'},
+      {icon:'🧾',title:'Facture professionnelle',desc:'Facture PDF pour une vente client',fn:'promptInvoice()'},
+      {icon:'💰',title:'Export ventes CSV',desc:'Toutes vos transactions',fn:'exportSalesCSV()'},
+      {icon:'📤',title:'Export charges CSV',desc:'Toutes vos charges',fn:'exportExpensesCSV()'},
+      {icon:'👥',title:'Export clients CSV',desc:'Votre portefeuille complet',fn:'exportClientsCSV()'},
+    ].map(it=>`<div class="card-pad">
+      <div style="font-size:38px;margin-bottom:10px">${it.icon}</div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:6px">${it.title}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">${it.desc}</div>
+      <button class="btn btn-primary btn-full" onclick="${it.fn}">Générer / Télécharger</button>
+    </div>`).join('')}
+  </div>`);
+}
+
+// ══════════════════════════════════════════════════════════════
+// PDF — Rapport mensuel
+// ══════════════════════════════════════════════════════════════
+async function genMonthlyPDF(){
+  if(!window.jspdf){toast('PDF non disponible hors connexion.','err');return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  const uid=APP.user.id;
+  const name=APP.profile?.name||APP.user.email;
+  const now=new Date();
+
+  const [{data:S},{data:E},{data:P}]=await Promise.all([
+    sb.from('sales').select('*').eq('user_id',uid),
+    sb.from('expenses').select('*').eq('user_id',uid),
+    sb.from('products').select('*').eq('user_id',uid),
+  ]);
+  const sales=S||[],expenses=E||[],products=P||[];
+  const totalR=sales.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const totalE=expenses.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const profit=totalR-totalE;
+
+  // Header
+  doc.setFillColor(10,15,10);doc.rect(0,0,210,48,'F');
+  doc.setTextColor(34,197,94);doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.text('RAPPORT FINANCIER',20,22);
+  doc.setTextColor(160,184,160);doc.setFontSize(10);doc.setFont('helvetica','normal');
+  doc.text(`${name} · Généré le ${now.toLocaleDateString('fr-CM')}`,20,34);
+
+  // KPIs
+  let y=58;
+  doc.setTextColor(0,0,0);
+  doc.setFillColor(240,250,240);doc.rect(15,y-6,180,40,'F');
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.text('Synthèse financière',20,y+2);y+=10;
+  doc.setFontSize(10);doc.setFont('helvetica','normal');
+  [[`Chiffre d'affaires total`,fmt(totalR)],[`Total charges`,fmt(totalE)],[`Résultat net`,fmt(Math.abs(profit))+(profit>=0?' (Bénéfice)':' (Déficit)')]].forEach(([l,v])=>{
+    doc.text(l+' :',24,y);doc.setFont('helvetica','bold');doc.text(v,120,y);doc.setFont('helvetica','normal');y+=8;
+  });
+
+  // Ventes
+  y+=8;doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(10,80,10);
+  doc.text('Détail des ventes',20,y);y+=8;
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
+  if(sales.length===0){doc.text('Aucune vente enregistrée',24,y);y+=8;}
+  else sales.slice(0,25).forEach(s=>{
+    doc.text(String(s.date||'').slice(0,10),20,y);
+    doc.text(String(s.client_name||'').slice(0,20),50,y);
+    doc.text(String(s.description||'').slice(0,35),95,y);
+    doc.setFont('helvetica','bold');doc.text(fmt(s.amount),165,y);doc.setFont('helvetica','normal');
+    y+=7;if(y>270){doc.addPage();y=20;}
+  });
+
+  // Charges
+  y+=6;if(y>260){doc.addPage();y=20;}
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(180,30,30);
+  doc.text('Détail des charges',20,y);y+=8;
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(0,0,0);
+  if(expenses.length===0){doc.text('Aucune charge enregistrée',24,y);y+=8;}
+  else expenses.slice(0,25).forEach(e=>{
+    doc.text(String(e.date||'').slice(0,10),20,y);
+    doc.text(String(e.category||'').slice(0,20),50,y);
+    doc.text(String(e.description||'').slice(0,35),95,y);
+    doc.setFont('helvetica','bold');doc.text(fmt(e.amount),165,y);doc.setFont('helvetica','normal');
+    y+=7;if(y>270){doc.addPage();y=20;}
+  });
+
+  // Footer
+  const total=doc.internal.getNumberOfPages();
+  for(let i=1;i<=total;i++){
+    doc.setPage(i);
+    doc.setTextColor(150,150,150);doc.setFontSize(8);
+    doc.text(`MonComptoir Pro · Page ${i}/${total} · Confidentiel`,20,290);
+  }
+
+  doc.save(`Rapport_${name.replace(/\s/g,'_')}_${now.toISOString().slice(0,7)}.pdf`);
+  toast('Rapport PDF généré !');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PDF — Facture
+// ══════════════════════════════════════════════════════════════
+async function promptInvoice(){
+  const {data}=await sb.from('sales').select('*').eq('user_id',APP.user.id).order('date',{ascending:false}).limit(20);
+  const sales=data||[];
+  if(sales.length===0){toast('Aucune vente disponible pour générer une facture.','warn');return;}
+  const opts=sales.map(s=>`<option value="${s.id}">[${s.date}] ${s.client_name||'Client'} — ${fmt(s.amount)}</option>`).join('');
+  showModal('🧾 Générer une facture PDF',
+    `<div class="fg"><label>Sélectionnez la vente</label><select class="sel" id="inv-sale">${opts}</select></div>
+    <div class="fg"><label>Numéro de facture</label><input class="inp" id="inv-num" value="FACT-${Date.now().toString().slice(-6)}"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+     <button class="btn btn-primary" onclick="genInvoicePDFFromModal()">🧾 Générer la facture</button>`);
+}
+
+async function genInvoicePDFFromModal(){
+  const saleId=document.getElementById('inv-sale')?.value;
+  const num=document.getElementById('inv-num')?.value||'FACT-001';
+  closeModal();
+  if(saleId)await genInvoicePDF(saleId,num);
+}
+
+async function genInvoicePDF(saleId,num='FACT-001'){
+  if(!window.jspdf){toast('PDF non disponible hors connexion.','err');return;}
+  const {jsPDF}=window.jspdf;
+  const {data:s}=await sb.from('sales').select('*').eq('id',saleId).single();
+  if(!s){toast('Vente introuvable.','err');return;}
+  const doc=new jsPDF();
+  const seller=APP.profile?.name||APP.user.email;
+
+  // En-tête
+  doc.setFillColor(10,15,10);doc.rect(0,0,210,50,'F');
+  doc.setTextColor(34,197,94);doc.setFontSize(26);doc.setFont('helvetica','bold');
+  doc.text('FACTURE',20,24);
+  doc.setTextColor(255,255,255);doc.setFontSize(10);doc.setFont('helvetica','normal');
+  doc.text(`N° ${num}`,20,36);doc.text(`Date : ${s.date}`,80,36);
+
+  // Parties
+  let y=60;
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.text('DE :',20,y);doc.setFont('helvetica','normal');doc.text(seller,40,y);
+  y+=8;doc.setFont('helvetica','bold');doc.text('À :',20,y);doc.setFont('helvetica','normal');doc.text(s.client_name||'Client',40,y);
+  y+=16;
+  // Ligne
+  doc.setFillColor(240,250,240);doc.rect(15,y-6,180,10,'F');
+  doc.setFont('helvetica','bold');
+  doc.text('Description',20,y+1);doc.text('Catégorie',110,y+1);doc.text('Montant',175,y+1);
+  y+=14;doc.setFont('helvetica','normal');
+  doc.text(s.description||'Prestation',20,y);doc.text(s.category||'—',110,y);doc.setFont('helvetica','bold');
+  doc.setFontSize(13);doc.text(fmt(s.amount),158,y);
+  y+=20;doc.setFontSize(10);
+  doc.setFillColor(240,250,240);doc.rect(120,y-6,75,16,'F');
+  doc.setFont('helvetica','bold');doc.text('TOTAL : '+fmt(s.amount),125,y+3);
+  y+=30;doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);doc.setFontSize(9);
+  doc.text('Merci pour votre confiance. Paiement à réception de la facture.',20,y);
+  doc.setTextColor(150,150,150);doc.setFontSize(8);
+  doc.text('MonComptoir Pro · Gestion Commerciale Cameroun',20,285);
+  doc.save(`Facture_${num}_${s.client_name||'Client'}.pdf`);
+  toast('Facture PDF générée !');
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════════════════════
+function exportCSV(data,name){
+  if(!data||data.length===0){toast('Aucune donnée à exporter.','warn');return;}
+  const keys=Object.keys(data[0]);
+  const csv=[keys.join(';'),...data.map(row=>keys.map(k=>JSON.stringify(row[k]??'')).join(';'))].join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${name}_${today()}.csv`;a.click();
+  toast(`Export ${name} téléchargé !`);
+}
+
+async function exportSalesCSV(){
+  const {data}=await sb.from('sales').select('*').eq('user_id',APP.user.id);
+  exportCSV((data||[]).map(s=>({Date:s.date,Client:s.client_name,Description:s.description,Catégorie:s.category,Montant:s.amount})),'ventes');
+}
+async function exportExpensesCSV(){
+  const {data}=await sb.from('expenses').select('*').eq('user_id',APP.user.id);
+  exportCSV((data||[]).map(e=>({Date:e.date,Catégorie:e.category,Description:e.description,Montant:e.amount})),'charges');
+}
+async function exportClientsCSV(){
+  const {data}=await sb.from('clients').select('*').eq('user_id',APP.user.id);
+  exportCSV((data||[]).map(c=>({Nom:c.name,Entreprise:c.company,Téléphone:c.phone,Ville:c.city,'CA Total':c.total_spent})),'clients');
+}
+
+// ══════════════════════════════════════════════════════════════
+// ABONNEMENT
+// ══════════════════════════════════════════════════════════════
+async function renderSubscription(){
+  const u=APP.user;const p=APP.profile;
+  const days=trialDays();const sub=p?.subscription_status||'inactive';
+  let trialInfo='';
+  if(sub==='trial'&&days>0){
+    const tc=days>4?'var(--green)':days>2?'var(--yellow)':'var(--red)';
+    const bc=days>4?'var(--gdim)':days>2?'var(--ydim)':'var(--rdim)';
+    trialInfo=`<div class="alert" style="background:${bc};border:1px solid rgba(255,255,255,.1);color:${tc}"><span style="font-size:22px">🎁</span><div><strong>Essai gratuit — ${days} jour${days>1?'s':''} restant${days>1?'s':''}</strong><br><span style="font-size:12px;opacity:.8">Abonnez-vous pour continuer sans interruption</span></div></div>`;
+  }
+  const statusMap={active:'<span class="sub-badge sub-active">✓ Abonnement actif</span>',trial:`<span class="sub-badge sub-trial">🎁 Essai gratuit (${days}j)</span>`,pending:'<span class="sub-badge sub-pending">⏳ Validation en cours</span>',inactive:'<span class="sub-badge sub-inactive">✗ Inactif</span>'};
+  const statusBadge=statusMap[sub]||statusMap.inactive;
+  const pGreen=APP.selPlan==='monthly';
+
+  set(`<div style="max-width:580px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:24px">
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:6px">Abonnement MonComptoir Pro</h2>
+      <p style="color:var(--text2)">Payez via Mobile Money · Validation sous 24h ouvrées</p>
+    </div>
+    ${trialInfo}
+    <div class="plan-grid">
+      <div class="plan-card${pGreen?' selected':''}" onclick="APP.selPlan='monthly';renderSubscription()">
+        <div style="font-weight:800;font-size:15px;margin-bottom:8px">Mensuel</div>
+        <div style="font-size:28px;font-weight:800;color:var(--green);line-height:1">5 000</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">FCFA / mois</div>
+        <div class="plan-feat"><span style="color:var(--green)">✓</span><span>Toutes les fonctionnalités</span></div>
+        <div class="plan-feat"><span style="color:var(--green)">✓</span><span>Export PDF & CSV</span></div>
+        <div class="plan-feat"><span style="color:var(--green)">✓</span><span>Support inclus</span></div>
+      </div>
+      <div class="plan-card${!pGreen?' selected':''}" onclick="APP.selPlan='yearly';renderSubscription()">
+        <div style="font-weight:800;font-size:15px;margin-bottom:8px">Annuel</div>
+        <div style="font-size:28px;font-weight:800;color:var(--green);line-height:1">45 000</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">FCFA / an</div>
+        <div class="plan-feat"><span style="color:var(--green)">✓</span><span>Toutes les fonctionnalités</span></div>
+        <div class="plan-feat"><span style="color:var(--green)">✓</span><span>Export PDF & CSV</span></div>
+        <div class="plan-feat"><span style="color:var(--yellow)">🎁</span><span><strong>2 mois offerts !</strong></span></div>
+      </div>
+    </div>
+    <div class="card-pad">
+      <div style="font-weight:800;font-size:15px;margin-bottom:14px">📱 Instructions de paiement</div>
+      <div class="alert alert-green">📞 Envoyez <strong>${pGreen?'5 000':'45 000'} FCFA</strong> au numéro <strong style="font-size:18px">698 36 87 01</strong> (MTN Money ou Orange Money)</div>
+      <div class="info-row"><span class="info-label">Référence à mentionner</span><strong>MCP-${u.id.slice(0,8).toUpperCase()}</strong></div>
+      <div class="info-row"><span class="info-label">Réseaux acceptés</span><strong>MTN Money · Orange Money</strong></div>
+      <div class="info-row"><span class="info-label">Délai de validation</span><strong>24 à 48h ouvrées</strong></div>
+    </div>
+    <div class="card-pad">
+      <div style="font-weight:800;font-size:15px;margin-bottom:14px">📸 Soumettre la preuve de paiement</div>
+      <div class="fg"><label>Numéro de transaction (ex: TXN123456789)</label><input class="inp" id="sub-txn" placeholder="Entrez le numéro reçu par SMS"></div>
+      <div class="upload-zone" id="up-zone" onclick="document.getElementById('sub-file').click()">
+        <input type="file" id="sub-file" accept="image/*" style="display:none" onchange="handleUpload(this)">
+        <div style="font-size:36px;margin-bottom:8px">📷</div>
+        <div id="up-label" style="font-weight:600">Cliquez pour uploader votre capture d'écran</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">PNG, JPG · Max 5 MB</div>
+      </div>
+      <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="submitSub()">📤 Soumettre ma preuve de paiement</button>
+    </div>
+    <div class="card-pad">
+      <div style="font-weight:800;font-size:15px;margin-bottom:12px">📋 Mon statut d'abonnement</div>
+      <div class="info-row"><span class="info-label">Statut actuel</span>${statusBadge}</div>
+      ${p?.subscription_expiry?`<div class="info-row"><span class="info-label">Expiration</span><strong>${fmtD(p.subscription_expiry)}</strong></div>`:''}
+    </div>
+  </div>`);
+}
+
+function handleUpload(inp){
+  if(inp.files[0]){
+    document.getElementById('up-label').textContent='✅ '+inp.files[0].name;
+    document.getElementById('up-zone').classList.add('has-file');
+  }
+}
+
+async function submitSub(){
+  const txn=document.getElementById('sub-txn')?.value.trim();
+  const file=document.getElementById('sub-file')?.files[0];
+  if(!txn){toast('Entrez votre numéro de transaction.','err');return;}
+  if(!file){toast('Uploadez votre preuve de paiement.','err');return;}
+
+  // Upload preuve vers Supabase Storage
+  const ext=file.name.split('.').pop();
+  const path=`${APP.user.id}/${Date.now()}.${ext}`;
+  const {error:upErr}=await sb.storage.from('subscription-proofs').upload(path,file);
+  if(upErr){toast('Erreur upload: '+upErr.message,'err');return;}
+
+  // Enregistrer la demande
+  await sb.from('subscriptions').insert({
+    user_id:APP.user.id,
+    plan:APP.selPlan,
+    amount:APP.selPlan==='monthly'?5000:45000,
+    transaction_number:txn,
+    proof_path:path,
+    status:'pending',
+  });
+
+  APP.profile.subscription_status='pending';
+  toast('Preuve soumise ! Validation sous 24h. Merci !');
+  updateHeader();
+  await renderSubscription();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════════════════
+async function renderAdmin(){
+  if(APP.profile?.role!=='admin'){renderLocked();return;}
+  const [{data:subs},{data:users}]=await Promise.all([
+    sb.from('subscriptions').select('*,profiles(name,email)').order('created_at',{ascending:false}),
+    sb.from('profiles').select('*').order('created_at',{ascending:false}),
+  ]);
+  const S=subs||[],U=users||[];
+  const pending=S.filter(s=>s.status==='pending');
+  const approved=S.filter(s=>s.status==='approved');
+
+  const pRows=pending.length===0
+    ?`<tr><td class="empty-td" colspan="6">✅ Aucune demande en attente</td></tr>`
+    :pending.map(s=>`<tr>
+      <td><strong>${esc(s.profiles?.name||'—')}</strong><br><small style="color:var(--text3)">${esc(s.profiles?.email||'')}</small></td>
+      <td><span class="tag tag-blue">${s.plan==='monthly'?'Mensuel':'Annuel'}</span></td>
+      <td class="c-green fw7">${fmt(s.amount)}</td>
+      <td style="font-size:12px;font-family:monospace;color:var(--text2)">${esc(s.transaction_number||'')}</td>
+      <td style="color:var(--text3);font-size:11px">${fmtD(s.created_at)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-primary btn-xs" onclick="approveSub('${s.id}','${s.user_id}','${s.plan}')">✅ Valider</button>
+        <button class="btn btn-danger btn-xs" onclick="rejectSub('${s.id}')">❌ Rejeter</button>
+      </div></td></tr>`).join('');
+
+  const uRows=U.slice(0,20).map(u=>`<tr>
+    <td><strong>${esc(u.name||'—')}</strong><br><small style="color:var(--text3)">${esc(u.email)}</small></td>
+    <td><span class="tag ${u.role==='admin'?'tag-yellow':'tag-blue'}">${u.role==='admin'?'👑 Admin':'🏪 Commerçant'}</span></td>
+    <td><span class="sub-badge ${u.subscription_status==='active'?'sub-active':u.subscription_status==='trial'?'sub-trial':u.subscription_status==='pending'?'sub-pending':'sub-inactive'}">${{active:'✓ Actif',trial:'🎁 Essai',pending:'⏳ Attente',inactive:'✗ Inactif'}[u.subscription_status]||'—'}</span></td>
+    <td style="color:var(--text3);font-size:11px">${fmtD(u.created_at)}</td>
+  </tr>`).join('');
+
+  set(`
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+    <div class="stat-card"><div class="stat-label">Utilisateurs inscrits</div><div class="stat-val">${U.length}</div><div class="stat-icon">👥</div></div>
+    <div class="stat-card"><div class="stat-label">Abonnements validés</div><div class="stat-val c-green">${approved.length}</div><div class="stat-icon">✅</div></div>
+    <div class="stat-card"><div class="stat-label">En attente</div><div class="stat-val c-yellow">${pending.length}</div><div class="stat-icon">⏳</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-head"><span class="card-title">⏳ Demandes en attente de validation</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Utilisateur</th><th>Plan</th><th>Montant</th><th>N° Transaction</th><th>Date</th><th>Actions</th></tr></thead>
+    <tbody>${pRows}</tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">👥 Tous les utilisateurs</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Utilisateur</th><th>Rôle</th><th>Statut</th><th>Inscription</th></tr></thead>
+    <tbody>${uRows}</tbody></table></div>
+  </div>`);
+}
+
+async function approveSub(subId,userId,plan){
+  const expiry=new Date();
+  expiry.setDate(expiry.getDate()+(plan==='monthly'?30:365));
+  await Promise.all([
+    sb.from('subscriptions').update({status:'approved'}).eq('id',subId),
+    sb.from('profiles').update({subscription_status:'active',subscription_expiry:expiry.toISOString()}).eq('id',userId),
+  ]);
+  toast('Abonnement validé ! ✅');await renderAdmin();
+}
+
+async function rejectSub(subId){
+  await sb.from('subscriptions').update({status:'rejected'}).eq('id',subId);
+  toast('Demande rejetée','warn');await renderAdmin();
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════════════
+function showModal(title,body,foot){
+  const existing=document.getElementById('m-overlay');if(existing)existing.remove();
+  const div=document.createElement('div');
+  div.className='modal-overlay';div.id='m-overlay';
+  div.onclick=e=>{if(e.target===div)closeModal();};
+  div.innerHTML=`<div class="modal">
+    <div class="modal-head"><span class="modal-title">${title}</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">${body}</div>
+    <div class="modal-foot">${foot}</div>
+  </div>`;
+  document.body.appendChild(div);
+}
+function closeModal(){const el=document.getElementById('m-overlay');if(el)el.remove();}
+
+// ══════════════════════════════════════════════════════════════
+// SIDEBAR MOBILE
+// ══════════════════════════════════════════════════════════════
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('mob-overlay');
+  sb.classList.toggle('open');ov.classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SEARCH FILTER (générique, re-fetch)
+// ══════════════════════════════════════════════════════════════
+async function filterTable(q,tbodyId,cache){
+  // Re-render page courante avec filtre simple
+  if(APP.page==='sales')await renderSales();
+}
+</script>
+</body>
+</html>
